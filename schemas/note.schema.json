@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "annotation-knowledge-sink structured note",
+  "type": "object",
+  "required": ["note_id", "category", "claim", "source", "derived_from"],
+  "properties": {
+    "note_id": {"type": "string", "pattern": "^N[0-9]{4}$", "description": "笔记唯一编号，全库唯一"},
+    "category": {
+      "type": "string",
+      "enum": ["question", "method", "conclusion", "doubt", "reusable", "keypoint"],
+      "description": "question=问题; method=方法; conclusion=结论; doubt=待验证疑点; reusable=可复用要点; keypoint=未归类要点"
+    },
+    "claim": {"type": "string", "description": "论断：有批注文字时用批注文字，否则为引文首句（截断至 240 字符并标注省略）"},
+    "source": {
+      "type": "object",
+      "description": "来源定位：每条论断必须能指到支撑它的原文片段",
+      "required": ["file_id", "file_name", "file_sha256"],
+      "properties": {
+        "file_id": {"type": ["string", "null"]},
+        "file_name": {"type": ["string", "null"]},
+        "file_sha256": {"type": ["string", "null"], "description": "内容寻址：版本变化后仍可核对"},
+        "page": {"type": ["integer", "null"], "description": "物理页码，1-based"},
+        "page_label": {"type": ["string", "null"], "description": "页面标签（如 i、12、A-3）"},
+        "char_start": {"type": ["integer", "null"], "description": "引文在页文本中的起始字符偏移"},
+        "char_end": {"type": ["integer", "null"]},
+        "quote": {"type": ["string", "null"], "description": "批注覆盖的原文引文（逐词恢复）"},
+        "bbox": {"type": ["array", "null"], "items": {"type": "number"},
+        "annotation_id": {"type": ["string", "null"], "description": "指向 PDF 批注的锚点 id：file#page<页>a<序>"},
+        "line": {"type": ["integer", "null"], "description": "散落笔记文件的行号"},
+        "note_file": {"type": ["string", "null"], "description": "散落笔记来源文件"},
+        "anchor_verified": {"type": ["boolean", "null"], "description": "引文是否已在该页文本中验证"},
+        "anchor_match": {"type": ["string", "null"], "enum": ["exact", "exact-dehyphen", "fuzzy", "none", "reference-parsed", "no-source-ref", null]}
+      }
+    },
+    "annotation_type": {
+      "type": "string",
+      "enum": ["highlight", "underline", "squiggly", "strikeout", "margin_note", "sticky_note",
+               "handwritten_mark", "form_field", "shape", "line_mark", "stamp", "attachment",
+               "media", "caret", "redaction", "other", "stray_note"]
+    },
+    "color_hex": {"type": ["string", "null"], "description": "批注颜色，忠实记录 RGB，不推断语义"},
+    "author": {"type": ["string", "null"], "description": "批注作者（/T 字段）"},
+    "created": {"type": ["string", "null"], "description": "批注创建时间（PDF 日期，ISO 化）"},
+    "modified": {"type": ["string", "null"]},
+    "tags": {"type": "array", "items": {"type": "string"}, "description": "方法词表命中的标签"},
+    "entities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "value"],
+        "properties": {
+          "type": {"enum": ["doi", "arxiv", "url", "citation", "quantity", "method"]},
+          "value": {"type": "string"}
+        }
+      }
+    },
+    "confidence": {"type": ["number", "null"], "description": "1.0 精确锚点; 0.8 模糊锚点; 0.9 批注自带文字; 0.4 OCR; 0.2 仅几何"},
+    "cluster_id": {"type": ["string", "null"], "description": "跨版本/重复文件归并簇编号 C###"},
+    "derived_from": {"enum": ["pdf_annotation", "note_file"]}
+  }
+}
